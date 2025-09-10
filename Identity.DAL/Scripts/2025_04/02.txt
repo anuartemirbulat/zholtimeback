@@ -1,0 +1,62 @@
+CREATE TABLE public."RefRoles" (
+	"Id" bigserial NOT NULL,
+	"DateCreate" timestamptz NOT NULL,
+	"DateUpdate" timestamptz NOT NULL,
+	"IsDeleted" bool NOT NULL default(false),
+	"Name" varchar(255) DEFAULT NULL::character varying NULL,	
+	"RoleEnum" int2 DEFAULT '0'::smallint NULL,
+	
+	CONSTRAINT "PK_RefRoles" PRIMARY KEY ("Id")
+);
+
+CREATE TABLE public."Users" (
+	"Id" bigserial NOT NULL,
+	"DateCreate" timestamptz NOT NULL,
+	"DateUpdate" timestamptz NOT NULL,
+	"IsDeleted" bool NOT NULL default(false),
+	"PhoneNumber" varchar(255) DEFAULT NULL::character varying NULL,
+	"Password" varchar(255) DEFAULT NULL::character varying NULL,
+	"Confirmed" bool NOT NULL default(false),
+	
+	CONSTRAINT "PK_Users" PRIMARY KEY ("Id")
+);
+
+CREATE TABLE public."AccountConfirmations" (
+	"Id" bigserial NOT NULL,
+	"DateCreate" timestamptz NOT NULL,
+	"DateUpdate" timestamptz NOT NULL,
+	"IsDeleted" bool NOT NULL default(false),
+	"PhoneNumber" varchar(255) DEFAULT NULL::character varying NULL,
+	"Code" varchar(255) DEFAULT NULL::character varying NULL,
+	"ExpirationDateTime" timestamptz NOT NULL,
+	"Confirmed" bool not null default(false),
+	"Guid" uuid not NULL,
+	
+	CONSTRAINT "PK_AccountConfirmations" PRIMARY KEY ("Id")
+);
+
+CREATE TABLE public."Profiles" (
+	"Id" bigserial NOT NULL,
+	"DateCreate" timestamptz NOT NULL,
+	"DateUpdate" timestamptz NOT NULL,
+	"IsDeleted" bool NOT NULL default(false),
+	
+	"FirstName" varchar(255) DEFAULT NULL::character varying NULL,
+	"LastName" varchar(255) DEFAULT NULL::character varying NULL,
+	"MiddleName" varchar(255) DEFAULT NULL::character varying NULL,
+	"InitialName" varchar(255) DEFAULT NULL::character varying NULL,
+	"Nickname" varchar(255) DEFAULT NULL::character varying NULL,
+	"Guid" uuid not NULL,
+	
+	"UserId" int4 not null  references public."Users"("Id"),
+	"RoleId" int4 not null  references public."RefRoles"("Id"),
+	
+	CONSTRAINT "PK_Profiles" PRIMARY KEY ("Id")
+);
+
+
+
+insert into "RefRoles" ("DateCreate", "DateUpdate" , "IsDeleted", "Name", "RoleEnum")
+values
+(NOW(),NOW(),false,'Пассажир',0),
+(NOW(),NOW(),false,'Водитель',1);

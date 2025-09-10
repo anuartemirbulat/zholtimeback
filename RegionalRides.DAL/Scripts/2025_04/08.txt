@@ -1,0 +1,40 @@
+CREATE TABLE public."Addresses" (
+	"Id" bigserial NOT NULL,
+	"DateCreate" timestamptz NOT NULL,
+	"DateUpdate" timestamptz NOT NULL,
+	"IsDeleted" bool NOT NULL default(false),
+	"Street" varchar(100) DEFAULT NULL::character varying NULL,
+	"House" varchar(50) DEFAULT NULL::character varying NULL,
+	"KatoId" int4 not null  references public."RefKatos"("Id"),
+	CONSTRAINT "PK_Addresses" PRIMARY KEY ("Id")
+);
+
+CREATE TABLE public."Profiles" (
+	"Id" bigserial NOT NULL,
+	"DateCreate" timestamptz NOT NULL,
+	"DateUpdate" timestamptz NOT NULL,
+	"IsDeleted" bool NOT NULL default(false),
+	"InitialName" varchar(100) DEFAULT NULL::character varying NULL,
+	"Nickname" varchar(100) DEFAULT NULL::character varying NULL,
+	"PhoneNumber" varchar(50) DEFAULT NULL::character varying NULL,
+	"Guid" uuid not NULL,
+	CONSTRAINT "PK_RegionalProfiles" PRIMARY KEY ("Id")
+);
+
+CREATE TABLE public."Orders" (
+	"Id" bigserial NOT NULL,
+	"DateCreate" timestamptz NOT NULL,
+	"DateUpdate" timestamptz NOT NULL,
+	"IsDeleted" bool NOT NULL default(false),
+
+	"SourceAddressId" int4 not null  references public."Addresses"("Id"),
+	"DestinationAddressId" int4 not null  references public."Addresses"("Id"),
+	"CustomerId" int4 not null  references public."Profiles"("Id"),
+
+	"Price" numeric(10,3) not null default(0),
+	"Comment"  varchar(255) DEFAULT NULL::character varying NULL,
+	CONSTRAINT "PK_Orders" PRIMARY KEY ("Id")
+);
+
+alter table "Orders" add "DepartureDateTime" timestamptz NULL;
+alter table "Orders" add "State" int2 not null default(0);

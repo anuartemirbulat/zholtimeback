@@ -1,0 +1,157 @@
+image: docker:20.10.24
+
+services:
+  - docker:20.10-dind
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  CI_REGISTRY: registry.gitlab.com
+  CI_REGISTRY_IMAGE: $CI_REGISTRY/waygo/waygobackend
+  STAGING_SERVER: 10.10.10.10
+  PRODUCTION_SERVER: 10.10.10.10
+
+stages:
+  - build
+  - deploy
+
+.build:
+  stage: build
+  script:
+    - |
+      case "$CI_COMMIT_REF_NAME" in
+        staging) TAG="staging" ;;
+        prod) TAG="prod" ;;
+        *) echo "❌ Unknown branch: $CI_COMMIT_REF_NAME"; exit 1 ;;
+      esac
+      echo "📦 Building $buildName with tag: $TAG"
+      docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+      docker build -t $CI_REGISTRY_IMAGE/$buildName:$TAG -f $dockerFilePath/Dockerfile .
+      docker push $CI_REGISTRY_IMAGE/$buildName:$TAG
+
+
+.deploy:
+  stage: deploy
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $TARGET_SERVER >> ~/.ssh/known_hosts
+    - ssh -i ~/.ssh/id_rsa root@$TARGET_SERVER "echo 'SSH connection works!'"
+  script:
+    - ssh -i ~/.ssh/id_rsa root@$TARGET_SERVER "
+      echo '$CI_REGISTRY_PASSWORD' | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin &&
+      cd /opt/waygobackend &&
+      docker-compose pull $buildName &&
+      docker-compose up -d --no-deps $buildName
+      "
+
+build:identity.api:
+  extends: .build
+  variables:
+    buildName: identity.api
+    dockerFilePath: Identity.Api
+  rules:
+    - changes:
+        - "Identity.Api/**/*"
+        - "Identity.DAL/**/*"
+        - "Identity.DataContract/**/*"
+        - "Identity.Services/**/*"
+
+deploy:identity.api:staging:
+  extends: .deploy
+  variables:
+    buildName: identity.api
+    TARGET_SERVER: $STAGING_SERVER
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "staging"'
+      changes:
+        - "Identity.Api/**/*"
+        - "Identity.DAL/**/*"
+        - "Identity.DataContract/**/*"
+        - "Identity.Services/**/*"
+
+deploy:identity.api:prod:
+  extends: .deploy
+  variables:
+    buildName: identity.api
+    TARGET_SERVER: $PRODUCTION_SERVER
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "prod"'
+      changes:
+        - "Identity.Api/**/*"
+        - "Identity.DAL/**/*"
+        - "Identity.DataContract/**/*"
+        - "Identity.Services/**/*"
+      when: manual
+
+### regionalrides
+build:regionalrides.api:
+  extends: .build
+  variables:
+    buildName: regionalrides.api
+    dockerFilePath: RegionalRides.Api
+  rules:
+    - changes:
+        - "RegionalRides.Api/**/*"
+        - "RegionalRides.DAL/**/*"
+        - "RegionalRides.DataContract/**/*"
+        - "RegionalRides.Services/**/*"
+
+deploy:regionalrides.api:staging:
+  extends: .deploy
+  variables:
+    buildName: regionalrides.api
+    TARGET_SERVER: $STAGING_SERVER
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "staging"'
+      changes:
+        - "RegionalRides.Api/**/*"
+        - "RegionalRides.DAL/**/*"
+        - "RegionalRides.DataContract/**/*"
+        - "RegionalRides.Services/**/*"
+
+deploy:regionalrides.api:prod:
+  extends: .deploy
+  variables:
+    buildName: regionalrides.api
+    TARGET_SERVER: $PRODUCTION_SERVER
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "prod"'
+      changes:
+        - "RegionalRides.Api/**/*"
+        - "RegionalRides.DAL/**/*"
+        - "RegionalRides.DataContract/**/*"
+        - "RegionalRides.Services/**/*"
+      when: manual
+
+###waygogateway
+build:waygogateway:
+  extends: .build
+  variables:
+    buildName: waygogateway
+    dockerFilePath: WaygoGateway
+  rules:
+    - changes:
+        - "WaygoGateway/**/*"
+
+deploy:waygogateway:staging:
+  extends: .deploy
+  variables:
+    buildName: waygogateway
+    TARGET_SERVER: $STAGING_SERVER
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "staging"'
+      changes:
+        - "WaygoGateway/**/*"
+
+deploy:waygogateway:prod:
+  extends: .deploy
+  variables:
+    buildName: waygogateway
+    TARGET_SERVER: $PRODUCTION_SERVER
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "prod"'
+      changes:
+        - "WaygoGateway/**/*"
+      when: manual

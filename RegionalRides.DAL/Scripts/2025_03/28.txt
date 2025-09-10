@@ -1,0 +1,26 @@
+CREATE TABLE public."RefKatos" (
+	"Id" bigserial NOT NULL,
+	"DateCreate" timestamptz NOT NULL,
+	"DateUpdate" timestamptz NOT NULL,
+	"IsDeleted" bool NOT NULL,
+	"Code" varchar(100) DEFAULT NULL::character varying NULL,
+	"NameRu" varchar(255) DEFAULT NULL::character varying NULL,
+	"NameKz" varchar(255) DEFAULT NULL::character varying NULL,
+	"Te" int4 NOT NULL,
+	"Ab" int4 NOT NULL,
+	"Cd" int4 NOT NULL,
+	"Ef" int4 NOT NULL,
+	"Hij" int4 NOT NULL,
+	"K" int4 NOT NULL,
+	"ParentId" int4 NULL,
+	"RegionId" int4 NULL,
+	
+	"ExternalId" int4 DEFAULT 0 NOT NULL,
+	"IsInactive" bool DEFAULT false NULL,
+	"BnsExternalId" int8 DEFAULT '0'::bigint NULL,
+	"BnsExternalParId" int8 DEFAULT '0'::bigint NULL,
+	"BnsLocationType" int2 DEFAULT '0'::smallint NULL,
+	CONSTRAINT "PK_RefKatos" PRIMARY KEY ("Id"),
+	CONSTRAINT "FK_RefKatos_RefKatos_ParentId" FOREIGN KEY ("ParentId") REFERENCES public."RefKatos"("Id"),
+	CONSTRAINT "FK_RefKatos_RefKatos_RegionId" FOREIGN KEY ("RegionId") REFERENCES public."RefKatos"("Id")
+);

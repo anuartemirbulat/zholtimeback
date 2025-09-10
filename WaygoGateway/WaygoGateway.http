@@ -1,0 +1,6 @@
+@WaygoGateway_HostAddress = http://localhost:5146
+
+GET {{WaygoGateway_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
